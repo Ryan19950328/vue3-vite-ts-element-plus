@@ -20,14 +20,6 @@ const routes = [
         meta: {
           title: '首页'
         }
-      },
-      {
-        path: '/second',
-        name: 'second',
-        component: () => import('@/views/second/index.vue'),
-        meta: {
-          title: '首页'
-        }
       }
     ]
   }

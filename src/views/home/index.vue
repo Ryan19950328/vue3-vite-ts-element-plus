@@ -1,43 +1,91 @@
 <template>
-  <div class="p-4 text-base">tailwindcss</div>
-  <el-button type="primary" :loading="loading" @click="handleBtn">获取数据</el-button>
-  <div v-for="(item, index) in list" :key="index">
-    <pre>{{ item }}</pre>
-  </div>
+  <el-button type="primary" @click="InitTableList">重置列表</el-button>
+  <el-table
+    v-loading="loading"
+    empty-text="暂无数据"
+    class="mt-5 mb-5"
+    :data="tableList"
+    border
+  >
+    <el-table-column type="index" label="序号" width="80" />
+    <el-table-column prop="date" label="日期" width="100" />
+    <el-table-column prop="name" label="姓名" width="150" />
+    <el-table-column prop="amt" label="金额" width="100" />
+    <el-table-column prop="address" label="地址" min-width="180" />
+    <el-table-column prop="tag" label="标签" width="80" />
+  </el-table>
+  <el-pagination
+    :current-page="page"
+    :page-sizes="[10, 20, 30, 40]"
+    :page-size="10"
+    layout="total, sizes, prev, pager, next, jumper"
+    :total="400"
+    @size-change="handleSizeChange"
+    @current-change="handleCurrentChange"
+  />
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, toRefs } from 'vue'
+import { defineComponent, reactive, ref, toRefs } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getMenus } from '@/api/api'
-interface state {
+import { getTableData } from '@/api/api'
+
+interface ITable {
+  page: number
+  pageSize: number
   loading: boolean
-  list: any[]
+  tableList: any
 }
 export default defineComponent({
   setup() {
-    const state = reactive<state>({
+    const table = reactive<ITable>({
+      page: 1,
+      pageSize: 10,
       loading: false,
-      list: []
+      tableList: []
     })
-    const handleBtn = async () => {
-      state.loading = true
-      const list = await getMenus()
-      state.list = state.list.concat(list)
-      state.loading = false
-      ElMessage.success('获取成功')
+
+    const getTableList = async () => {
+      table.loading = true
+      try {
+        const tableList = await getTableData({
+          page: table.page,
+          pageSize: table.pageSize
+        })
+        setTimeout(() => {
+          table.loading = false
+          table.tableList = tableList
+          ElMessage.success('获取成功')
+        }, 1000)
+      } catch (err) {
+        table.loading = false
+      }
+    }
+
+    getTableList()
+
+    const InitTableList = () => {
+      getTableList()
+    }
+
+    const handleSizeChange = (val: number) => {
+      table.pageSize = val
+      getTableList()
+    }
+
+    const handleCurrentChange = (val: number) => {
+      table.page = val
+      getTableList()
     }
 
     return {
-      ...toRefs(state),
-      handleBtn
+      ...toRefs(table),
+      InitTableList,
+      handleSizeChange,
+      handleCurrentChange
     }
   }
 })
 </script>
 
-<style scoped lang="scss">
-.title {
-  text-align: center;
-}
-</style>
+<style scoped lang="scss"></style>
