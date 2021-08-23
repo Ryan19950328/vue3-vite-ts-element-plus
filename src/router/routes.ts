@@ -3,10 +3,17 @@
  * name:'router-name'             如果用到<keep-alive>，必须设置该属性
  * meta : {
     title: 'title'                用于设置网页标签显示的标题
+    activePath: '',               用于记录菜单活动状态
     keepAilve: true               是否缓存，默认 false
   }
  */
-const routes = [
+
+const routes: any[] = [
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/views/login/login.vue')
+  },
   {
     path: '/',
     name: 'Layout',
@@ -18,11 +25,31 @@ const routes = [
         name: 'home',
         component: () => import('@/views/home/index.vue'),
         meta: {
-          title: '首页'
+          title: '首页',
+          activePath: '/home'
         }
       }
     ]
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: '404',
+    component: () => import('@/views/404/404.vue'),
+    meta: {
+      activePath: '/404'
+    }
   }
 ]
 
+/** 当路由很多时，可以拆分成小模块 **/
+// 自动导入Modules 模块
+const routeModuleFiles: any = import.meta.globEager('./modules/*.ts')
+for (const i in routeModuleFiles) {
+  if (Object.prototype.hasOwnProperty.call(routeModuleFiles, i)) {
+    const element = routeModuleFiles[i]
+    element.default.forEach((route: any) => {
+      routes[1].children.push(route)
+    })
+  }
+}
 export default routes

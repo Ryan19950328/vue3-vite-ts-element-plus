@@ -24,7 +24,7 @@ module.exports = {
     semi: ['error', 'never'],
     indent: ['error', 2, { SwitchCase: 1 }],
     'object-curly-spacing': ['error', 'always'],
-    'arrow-parens': ['error', 'as-needed'],
+    'arrow-parens': ['error', 'always'],
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/member-delimiter-style': [
@@ -47,7 +47,7 @@ module.exports = {
       'error',
       {
         html: {
-          void: 'never',
+          void: 'always',
           normal: 'never',
           component: 'always'
         }
@@ -63,5 +63,8 @@ module.exports = {
     'vue/require-default-prop': 'off',
     'vue/html-closing-bracket-spacing': 'error'
   },
-  globals: {}
+  globals: {
+    _: true,
+    dayjs: true
+  }
 }

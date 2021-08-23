@@ -1,91 +1,109 @@
 <template>
-  <el-button type="primary" @click="InitTableList">重置列表</el-button>
-  <el-table
-    v-loading="loading"
-    empty-text="暂无数据"
-    class="mt-5 mb-5"
-    :data="tableList"
-    border
-  >
-    <el-table-column type="index" label="序号" width="80" />
-    <el-table-column prop="date" label="日期" width="100" />
-    <el-table-column prop="name" label="姓名" width="150" />
-    <el-table-column prop="amt" label="金额" width="100" />
-    <el-table-column prop="address" label="地址" min-width="180" />
-    <el-table-column prop="tag" label="标签" width="80" />
-  </el-table>
-  <el-pagination
-    :current-page="page"
-    :page-sizes="[10, 20, 30, 40]"
-    :page-size="10"
-    layout="total, sizes, prev, pager, next, jumper"
-    :total="400"
-    @size-change="handleSizeChange"
-    @current-change="handleCurrentChange"
-  />
+  <el-row>
+    <el-col :span="24">
+      <div class="grid-content">
+        <div class="userInfo">
+          <div class="userImg">
+            <img src="@/assets/imgs/default-avatar.png" alt="" />
+          </div>
+          <div class="userRight">
+            <h2 class="name">
+              你好，<span>{{ userInfo.userName }}</span>
+            </h2>
+            <p class="loginTime">登录日期：{{ currentTime }}</p>
+            <p class="userWord">{{ soulWord }}</p>
+          </div>
+        </div>
+      </div>
+    </el-col>
+  </el-row>
+  <nf-form-wrap title="测试">
+    <div>ceshi</div>
+    <!-- <el-button @click="test1 = '更改了额'">点击</el-button> -->
+  </nf-form-wrap>
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, toRefs } from 'vue'
-import { ElMessage } from 'element-plus'
-import { getTableData } from '@/api/api'
-
-interface ITable {
-  page: number
-  pageSize: number
-  loading: boolean
-  tableList: any
-}
+import { defineComponent, computed, ref } from 'vue'
+import { ElRow, ElCol } from 'element-plus'
+import { useStore } from 'vuex'
+import { random } from 'lodash-es'
+import dayjs from 'dayjs'
+import soulSoother from '@/assets/types/home'
 export default defineComponent({
+  components: {
+    ElRow,
+    ElCol
+  },
   setup() {
-    const table = reactive<ITable>({
-      page: 1,
-      pageSize: 10,
-      loading: false,
-      tableList: []
-    })
+    // 首页心灵鸡汤
+    const word = soulSoother[random(0, soulSoother.length - 1)]
+    const soulWord = ref(word)
+    const currentTime = ref(dayjs().format('YYYY-MM-DD'))
 
-    const getTableList = async () => {
-      table.loading = true
-      try {
-        const tableList = await getTableData({
-          page: table.page,
-          pageSize: table.pageSize
-        })
-        setTimeout(() => {
-          table.loading = false
-          table.tableList = tableList
-          ElMessage.success('获取成功')
-        }, 1000)
-      } catch (err) {
-        table.loading = false
-      }
-    }
-
-    getTableList()
-
-    const InitTableList = () => {
-      getTableList()
-    }
-
-    const handleSizeChange = (val: number) => {
-      table.pageSize = val
-      getTableList()
-    }
-
-    const handleCurrentChange = (val: number) => {
-      table.page = val
-      getTableList()
-    }
+    const store = useStore()
 
     return {
-      ...toRefs(table),
-      InitTableList,
-      handleSizeChange,
-      handleCurrentChange
+      soulWord,
+      currentTime,
+      userInfo: computed(() => store.state.user.userInfo)
     }
   }
 })
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.grid-content {
+  background-color: #fff;
+  border-radius: 4px;
+  height: 295px;
+
+  .loginTime {
+    color: #787f95;
+    padding-top: 12px;
+  }
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  height: 100%;
+
+  .userImg {
+    width: 120px;
+    min-width: 100px;
+    height: 120px;
+    border-radius: 50%;
+    margin-left: 40px;
+    vertical-align: middle;
+
+    img {
+      width: 100%;
+    }
+  }
+}
+
+.userRight {
+  padding: 0 20px 0 40px;
+
+  .name {
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  h2 {
+    font-size: 22px;
+    color: #121c40;
+    margin: 0;
+    border: 0;
+    font-weight: 400;
+  }
+
+  .userWord {
+    font-size: 14px;
+    color: #787f95;
+    margin-top: 15px;
+    line-height: 1.4;
+  }
+}
+</style>

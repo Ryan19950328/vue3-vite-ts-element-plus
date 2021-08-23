@@ -1,21 +1,17 @@
 <template>
   <el-container>
+    <!-- 头部 -->
+    <el-header style="height: 50px">
+      <nf-header :is-collapse="isCollapse" />
+    </el-header>
+
     <!-- 侧边菜单栏 -->
     <div class="aside">
-      <el-menu :default-active="$route.path">
-        <el-menu-item
-          v-for="(route, index) in routes"
-          :key="index"
-          :index="route.path"
-          @click="handleMenuItem(route.path)"
-        >
-          <span>{{ route.title }}</span>
-        </el-menu-item>
-      </el-menu>
+      <nf-menu :active-menu="activeMenu" />
     </div>
 
     <!-- 主体内容 -->
-    <el-main id="nucarf-main">
+    <el-main id="nucarf-main" :class="[isCollapse ? 'isCollapse' : '']">
       <el-scrollbar>
         <!-- 主体部分 -->
         <router-view />
@@ -25,23 +21,40 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import menus from '@/utils/menus'
-
+import { defineComponent, computed, watch, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { useStore } from 'vuex'
+import { ElContainer, ElMain, ElScrollbar, ElHeader } from 'element-plus'
+import NfHeader from './components/NfHeader.vue'
+import NfMenu from './components/NfMenu.vue'
 export default defineComponent({
+  components: {
+    ElContainer,
+    ElMain,
+    ElScrollbar,
+    ElHeader,
+    NfHeader,
+    NfMenu
+  },
   setup() {
-    const router = useRouter()
-    const routes = ref(menus)
-
-    // 点击菜单
-    const handleMenuItem = (path: string) => {
-      router.push(path)
-    }
+    const route = useRoute()
+    const store = useStore()
+    const activeMenu = ref('')
+    watch(
+      () => route,
+      (val) => {
+        const { meta } = val
+        if (meta.activePath as string) {
+          // 对应菜单激活 menu
+          activeMenu.value = meta.activePath as string
+        }
+      },
+      { immediate: true }
+    )
 
     return {
-      routes,
-      handleMenuItem
+      activeMenu,
+      isCollapse: computed(() => store.state.layout.isCollapse)
     }
   }
 })
@@ -50,6 +63,23 @@ export default defineComponent({
 <style scoped lang="scss">
 .el-container {
   height: 100%;
+}
+
+.el-header {
+  position: fixed;
+  width: 100%;
+  z-index: 1501;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
+  background-color: #2e3759;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  p {
+    margin: 0;
+    line-height: 60px;
+  }
 }
 
 .aside {
@@ -69,12 +99,18 @@ export default defineComponent({
 
 .el-main {
   height: 100%;
+  margin-top: 50px;
   margin-left: 220px;
   padding: 0;
   overflow: hidden;
   position: relative;
   perspective: none;
   backface-visibility: hidden;
+  transition: 0.3s margin-left ease-in-out;
+
+  &.isCollapse {
+    margin-left: 64px;
+  }
 
   :deep(.el-scrollbar__view:not(.el-time-spinner__list)) {
     padding: 10px;

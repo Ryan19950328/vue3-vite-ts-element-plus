@@ -20,7 +20,7 @@ service.interceptors.request.use(
     }
     return config
   },
-  error => {
+  (error) => {
     // 对请求错误做些什么
     return Promise.reject(error)
   }
@@ -45,7 +45,7 @@ service.interceptors.response.use(
       return data.data
     }
   },
-  err => {
+  (err) => {
     // 对响应错误做点什么
     if (err && err.response) {
       switch (err.response.status) {
