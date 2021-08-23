@@ -3,7 +3,6 @@ const state = {
   params: {
     pageNo: 1,
     pageSize: 10,
-    pager: { pageNo: 1, pageSize: 10 },
     options: {}
   },
   roles: {}, // 权限

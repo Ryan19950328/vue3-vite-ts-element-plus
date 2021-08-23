@@ -1,14 +1,15 @@
 <template>
   <div class="text-right mt-2.5">
     <el-pagination
-      v-if="defaultOptions.isPagination"
-      v-model:current-page="defaultOptions.currentPage"
-      v-model:page-size="defaultOptions.pageSize"
+      v-if="isPagination"
+      v-model:current-page="currentPage"
+      v-model:page-size="pageSize"
       v-bind="$attrs"
       background
       :total="total"
-      :page-sizes="defaultOptions.pageSizes"
-      :layout="defaultOptions.layout"
+      :page-sizes="pageSizes"
+      :layout="layout"
+      hide-on-single-page
     />
   </div>
 </template>
@@ -20,7 +21,7 @@
  * @Date: 2021-08-19 16:45:56
  */
 import { ElPagination } from 'element-plus'
-import { defineComponent, reactive, onUpdated } from 'vue'
+import { defineComponent, reactive, toRefs, onUpdated } from 'vue'
 interface OPTIONS {
   isPagination: boolean
   currentPage: number
@@ -43,19 +44,19 @@ export default defineComponent({
     const defaultOptions = reactive<OPTIONS>({
       isPagination: true,
       currentPage: 1,
-      pageSize: 20,
+      pageSize: 10,
       pageSizes: [10, 20, 30, 40, 50, 100],
       layout: 'total, sizes, prev, pager, next, jumper'
     })
 
+    Object.assign(defaultOptions, attrs)
+
     onUpdated(() => {
       Object.assign(defaultOptions, attrs)
-      defaultOptions.currentPage = Number(defaultOptions.currentPage)
-      defaultOptions.pageSize = Number(defaultOptions.pageSize)
     })
 
     return {
-      defaultOptions
+      ...toRefs(defaultOptions)
     }
   }
 })

@@ -173,6 +173,10 @@
   }
 }
 
+button.el-button {
+  border-radius: $border-radius;
+}
+
 .el-button--text {
   background: 0 0;
   padding-left: 0;

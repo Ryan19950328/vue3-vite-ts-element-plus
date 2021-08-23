@@ -214,9 +214,9 @@
       </el-table>
       <!-- 分页组件 -->
       <nf-pagination
-        v-if="isPagination"
-        :current-page="params.page"
-        :page-size="params.per_page"
+        v-if="total > 0"
+        :current-page="params.pageNo"
+        :page-size="params.pageSize"
         :total="total"
         @current-change="handlePageChange"
         @size-change="handleSizeChange"
@@ -231,7 +231,7 @@
  * @Author: wjw
  * @Date: 2020-01-06 13:32:56
  */
-import { defineComponent, PropType, toRefs, ref, reactive, watch, h } from 'vue'
+import { defineComponent, toRefs, ref, reactive, watch, h } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
 import { isFunction, findIndex, isEmpty, omit, includes } from 'lodash-es'
@@ -248,9 +248,10 @@ import {
   ElMessageBox,
   ElMessage
 } from 'element-plus'
-import { updateParams } from '@/utils/utils'
+import { updateUrlParams } from '@/utils/utils'
 import { post } from '@/http/request'
-import { BatchOptions, TableOperation, Button } from './types'
+import { BatchOptions, Button } from './typing'
+import props from './props'
 import privilege from '@/utils/pageType/privilege'
 import getComputeds from './hook/computed'
 export default defineComponent({
@@ -266,72 +267,12 @@ export default defineComponent({
     ElSelect,
     ElOption
   },
-  props: {
-    // store模块 名称
-    storeModelName: {
-      type: String,
-      default: ''
-    },
-    // 表格数据唯一性字段
-    rowKey: {
-      type: String,
-      default: 'id'
-    },
-    // 添加按钮路由路径
-    addBtnLink: {
-      type: String,
-      default: ''
-    },
-    // 添加按钮路由路径
-    addBtnLinkText: {
-      type: String,
-      default: '添加'
-    },
-    // 批量操作
-    batchOptions: {
-      type: Array as PropType<BatchOptions[]>,
-      default: () => []
-    },
-    // table 操作栏按钮
-    showTableOperation: {
-      type: Boolean,
-      default: true
-    },
-    // 没有操作栏的自定义表头
-    showEditTableHeader: {
-      type: Boolean,
-      default: true
-    },
-    // table 操作栏按钮
-    tableOperation: {
-      type: Object as PropType<TableOperation>,
-      default: () => ({})
-    },
-    // 是否显示按钮组
-    showButtonGroups: {
-      type: Boolean,
-      default: true
-    },
-    // 是否显示下拉框组
-    showDropdownGroups: {
-      type: Boolean,
-      default: false
-    },
-    // 是否显示分页
-    isPagination: {
-      type: Boolean,
-      default: true
-    },
-    // 非checkbox点击高亮（可多选）
-    highlightClickRow: {
-      type: Boolean,
-      default: true
-    }
-  },
+  props: props,
   setup(props, { attrs }) {
     const route = useRoute()
     const router = useRouter()
     const store = useStore()
+    const computeds = reactive(getComputeds(props.storeModelName))
     const batchVal = reactive<BatchOptions>({
       id: null,
       label: '',
@@ -345,7 +286,7 @@ export default defineComponent({
     const defaultOptions = reactive({
       border: true,
       size: 'mini',
-      selection: true,
+      selection: false,
       selectable: null
     })
     // 初始化
@@ -355,14 +296,13 @@ export default defineComponent({
     const urlPrams = route.query
     if (!isEmpty(urlPrams)) {
       const updataParams = {
-        pageNo: urlPrams.pageNo ? urlPrams.pageNo : 1,
-        pageSize: urlPrams.pageSize ? urlPrams.pageSize : 20,
-        options: omit(urlPrams, ['pageNo', 'pageSize'])
+        pageNo: urlPrams.page ? Number(urlPrams.page) : 1,
+        pageSize: urlPrams.pageSize ? Number(urlPrams.pageSize) : 20,
+        options: omit(urlPrams, ['page', 'pageSize'])
       }
       store.commit(`${props.storeModelName}/updateTableData`, [])
       store.commit(`${props.storeModelName}/updateParams`, updataParams)
     }
-    const computeds = reactive(getComputeds(props.storeModelName))
 
     const getSearchData = () => {
       store.dispatch('data/getSearchData', props.storeModelName)
@@ -426,31 +366,36 @@ export default defineComponent({
     }
     // 点击搜索
     const handleSearchClick = (condition) => {
-      const pageParams = {
-        page: 1,
-        per_page: computeds.params.per_page
-      }
-      // 更新分页参数
-      updateParams(pageParams)
+      updateUrlParams({
+        page: 3,
+        pageSize: computeds.params.pageSize
+      })
       const query = route.query
       const searchParams = {
-        page: 1,
-        options: Object.assign(condition, omit(query, ['pageNo', 'pageSize']))
+        pageNo: 1,
+        options: Object.assign(condition, omit(query, ['page', 'pageSize']))
       }
       store.commit(`${props.storeModelName}/updateTableData`, [])
       store.commit(`${props.storeModelName}/updateParams`, searchParams)
       getTableList()
     }
-    const handlePageChange = (currentPage: number) => {
-      const page = { page: currentPage }
-      store.commit(`${props.storeModelName}/updateParams`, page)
-      updateParams(page)
+    const handlePageChange = (page: number) => {
+      store.commit(`${props.storeModelName}/updateParams`, {
+        pageNo: page
+      })
+      updateUrlParams({
+        page: page,
+        pageSize: computeds.params.pageSize
+      })
       getTableList()
     }
     const handleSizeChange = (size: number) => {
-      const pageSize = { per_page: size }
+      const pageSize = { pageSize: size }
       store.commit(`${props.storeModelName}/updateParams`, pageSize)
-      updateParams(pageSize)
+      updateUrlParams({
+        page: computeds.params.pageNo,
+        pageSize: size
+      })
       getTableList()
     }
     // 批量操作自定义提示
@@ -482,13 +427,16 @@ export default defineComponent({
             const total = computeds.total // 总条数
             const params = computeds.params // 请求数据的分页参数
             const length = computeds.multipleSelection.length // 删除的条数
-            const pages = Math.ceil((total - length) / (params.per_page as number)) // 删除后，数据总页数
-            let currentPage = Number(params.page) > pages ? pages : Number(params.page) // 如果当前页完全删除，跳转到上一页
+            const pages = Math.ceil((total - length) / (params.pageSize as number)) // 删除后，数据总页数
+            let currentPage = Number(params.pageNo) > pages ? pages : Number(params.pageNo) // 如果当前页完全删除，跳转到上一页
             currentPage = currentPage < 1 ? 1 : currentPage
-            if (Number(currentPage) !== Number(params.page)) {
-              updateParams({ page: currentPage })
+            if (Number(currentPage) !== Number(params.pageNo)) {
+              updateUrlParams({
+                page: currentPage,
+                pageSize: params.pageSize
+              })
               store.commit(`${props.storeModelName}/updateParams`, {
-                page: currentPage
+                pageNo: currentPage
               })
             }
           }

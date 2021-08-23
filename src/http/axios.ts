@@ -3,6 +3,7 @@ import Axios from 'axios'
 import { AxiosRequestConfig, AxiosResponse } from 'axios'
 import baseURL from './config'
 import { ElMessage } from 'element-plus'
+import { readerFile } from '@/utils/utils'
 import { getToken } from '@/utils/auth'
 
 // 创建axios实例
@@ -28,8 +29,21 @@ service.interceptors.request.use(
 
 // 添加响应拦截器
 service.interceptors.response.use(
-  (res: AxiosResponse) => {
+  async (res: AxiosResponse) => {
     const { data } = res
+    if (!data.status && data.type.includes('json')) {
+      // Blob 失败返回json
+      const failData: any = await readerFile(data)
+      ElMessage.closeAll()
+      ElMessage({
+        message: failData.status.msg || failData.status.message || 'error',
+        showClose: true,
+        type: 'error',
+        duration: 4000
+      })
+    } else if (!data.status && data.type.includes('octet-stream')) {
+      return data
+    }
     const code = Number(data.status.code || 0)
     if (code !== 200) {
       ElMessage.closeAll()

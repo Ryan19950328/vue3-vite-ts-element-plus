@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import { useStore } from 'vuex'
-import { TableColumn } from '../types'
+import { TableColumn } from '../typing'
 
 const getComputeds = (storeModelName: string) => {
   const { state } = useStore()
@@ -9,7 +9,7 @@ const getComputeds = (storeModelName: string) => {
     // 用于计算保证 表格依赖的接口请求完成
     count: computed((): number => state['data'].count),
     // 表头
-    tableHeads: computed((): any[] => state[storeModelName].tableHeadList),
+    tableHeadList: computed((): any[] => state[storeModelName].tableHeadList),
     // 过滤后的表头
     tableActiveHeaders: computed((): any[] => {
       const result = state[storeModelName].tableHeadList
@@ -26,7 +26,7 @@ const getComputeds = (storeModelName: string) => {
     // 多选的数据
     multipleSelection: computed((): any[] => state[storeModelName].multipleSelection),
     // 权限
-    roles: computed((): Record<string, unknown> => state[storeModelName].tableHeadList)
+    roles: computed((): Record<string, unknown> => state[storeModelName].roles)
   }
 }
 export default getComputeds
