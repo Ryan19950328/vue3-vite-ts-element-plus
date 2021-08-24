@@ -1,15 +1,24 @@
 <template>
-  <router-view />
+  <el-config-provider :locale="locale">
+    <router-view />
+  </el-config-provider>
 </template>
 
 <script lang="ts">
 import { defineComponent, onBeforeMount, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { debounce } from 'lodash-es'
+import { ElConfigProvider } from 'element-plus'
+import zhCn from 'element-plus/lib/locale/lang/zh-cn'
 
 export default defineComponent({
+  components: {
+    ElConfigProvider
+  },
   setup() {
     const { commit } = useStore()
+    const locale = zhCn
+
     const resizeFun = () => {
       const baseWidth = 768
       const clientWidth = document.documentElement.clientWidth
@@ -25,7 +34,9 @@ export default defineComponent({
     onBeforeMount(() => {
       window.removeEventListener('resize', debounceResize)
     })
-    return {}
+    return {
+      locale
+    }
   }
 })
 </script>
